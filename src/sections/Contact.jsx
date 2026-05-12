@@ -1,15 +1,23 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
+import emailjs from '@emailjs/browser'
 import {
   FiMail, FiPhone, FiMapPin,
-  FiGithub, FiLinkedin, FiSend, FiCheck,
+  FiGithub, FiLinkedin, FiSend, FiCheck, FiAlertCircle,
 } from 'react-icons/fi'
 import SectionContainer from '../components/layout/SectionContainer'
 import SectionTag from '../components/ui/SectionTag'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import FadeInView from '../components/animations/FadeInView'
-import { SOCIAL_LINKS, SITE_CONFIG } from '../constants'
+import { SOCIAL_LINKS } from '../constants'
+
+// ─── Environment Variables ────────────────────────────────────────────
+// Vite exposes these via import.meta.env
+// They are injected at BUILD TIME from your .env file
+const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
+const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
 
 // ─── Contact Info Item ────────────────────────────────────────────────
 function ContactItem({ icon: Icon, label, value, href }) {
@@ -24,46 +32,49 @@ function ContactItem({ icon: Icon, label, value, href }) {
       </div>
     </div>
   )
-
-  return href ? (
-    <a href={href} className="block">{content}</a>
-  ) : (
-    <div>{content}</div>
-  )
+  return href ? <a href={href} className="block">{content}</a> : <div>{content}</div>
 }
 
 // ─── Contact Form ─────────────────────────────────────────────────────
-// TEACHING MOMENT — Controlled Form Pattern:
-// Every input has a value tied to state (controlled component).
-// onChange updates state on every keystroke.
-// onSubmit reads from state to process the form.
-// This is the standard React form pattern.
-
 function ContactForm() {
+  const formRef = useRef(null)
+
   const [form, setForm] = useState({
     name: '', email: '', subject: '', budget: '', message: '',
   })
-  const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
+
+  // Three possible states: idle | loading | success | error
+  const [status, setStatus] = useState('idle')
 
   const handleChange = (e) => {
-    // Computed property name: [e.target.name] dynamically sets
-    // the right key in the object without needing separate handlers
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault() // prevents page reload on submit
-    setLoading(true)
+    e.preventDefault()
+    setStatus('loading')
 
-    // Simulate form submission (replace with EmailJS or Formspree later)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    try {
+      // EmailJS sends the form using your template
+      // It maps form field names to template variables automatically
+      // {{from_name}} in template = input name="name" in form
+      await emailjs.sendForm(
+        SERVICE_ID,
+        TEMPLATE_ID,
+        formRef.current,  // passes the whole form element
+        { publicKey: PUBLIC_KEY }
+      )
 
-    setLoading(false)
-    setSubmitted(true)
+      setStatus('success')
+      // Reset form after success
+      setForm({ name: '', email: '', subject: '', budget: '', message: '' })
+
+    } catch (error) {
+      console.error('EmailJS error:', error)
+      setStatus('error')
+    }
   }
 
-  // Input class — reused across all fields for consistency
   const inputClass = `
     w-full bg-bg-secondary border border-border rounded-btn
     px-4 py-3 text-text-primary text-sm
@@ -72,7 +83,8 @@ function ContactForm() {
     transition-all duration-200
   `
 
-  if (submitted) {
+  // ── Success State ──
+  if (status === 'success') {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -84,10 +96,12 @@ function ContactForm() {
         </div>
         <h3 className="text-text-primary font-bold text-xl">Message Sent!</h3>
         <p className="text-text-secondary text-sm max-w-xs">
-          Thanks for reaching out. I'll get back to you within 24 hours.
+          Thanks for reaching out! I'll get back to you at{' '}
+          <span className="text-accent">{form.email || 'your email'}</span>{' '}
+          within 24 hours.
         </p>
         <button
-          onClick={() => { setSubmitted(false); setForm({ name: '', email: '', subject: '', budget: '', message: '' }) }}
+          onClick={() => setStatus('idle')}
           className="text-accent text-sm hover:underline mt-2"
         >
           Send another message
@@ -97,22 +111,44 @@ function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* Name + Email Row */}
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+      {/* Error Banner */}
+      {status === 'error' && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 px-4 py-3 rounded-btn bg-red-500/10 border border-red-500/30 text-red-400 text-sm"
+        >
+          <FiAlertCircle size={16} className="shrink-0" />
+          <span>
+            Something went wrong. Please try emailing me directly at{' '}
+            <a href="mailto:nellytobiloba@gmail.com" className="underline">
+              nellytobiloba@gmail.com
+            </a>
+          </span>
+        </motion.div>
+      )}
+
+      {/* Name + Email */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-text-secondary text-xs font-medium">Your Name</label>
+          <label className="text-text-secondary text-xs font-medium">
+            Your Name
+          </label>
           <input
             name="name"
             value={form.name}
             onChange={handleChange}
-            placeholder="Oluwatobiloba"
+            placeholder="John Doe"
             required
             className={inputClass}
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-text-secondary text-xs font-medium">Your Email</label>
+          <label className="text-text-secondary text-xs font-medium">
+            Your Email
+          </label>
           <input
             name="email"
             type="email"
@@ -125,10 +161,12 @@ function ContactForm() {
         </div>
       </div>
 
-      {/* Subject + Budget Row */}
+      {/* Subject + Budget */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-text-secondary text-xs font-medium">Subject</label>
+          <label className="text-text-secondary text-xs font-medium">
+            Subject
+          </label>
           <input
             name="subject"
             value={form.subject}
@@ -139,7 +177,9 @@ function ContactForm() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-text-secondary text-xs font-medium">Your Budget (optional)</label>
+          <label className="text-text-secondary text-xs font-medium">
+            Budget (optional)
+          </label>
           <input
             name="budget"
             value={form.budget}
@@ -152,7 +192,9 @@ function ContactForm() {
 
       {/* Message */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-text-secondary text-xs font-medium">Message</label>
+        <label className="text-text-secondary text-xs font-medium">
+          Message
+        </label>
         <textarea
           name="message"
           value={form.message}
@@ -164,14 +206,14 @@ function ContactForm() {
         />
       </div>
 
-      {/* Submit */}
+      {/* Submit Button */}
       <Button
         type="submit"
         size="md"
         className="w-full justify-center"
-        disabled={loading}
+        disabled={status === 'loading'}
       >
-        {loading ? (
+        {status === 'loading' ? (
           <>
             <motion.div
               animate={{ rotate: 360 }}
@@ -187,6 +229,7 @@ function ContactForm() {
           </>
         )}
       </Button>
+
     </form>
   )
 }
@@ -197,7 +240,6 @@ function Contact() {
     <SectionContainer id="contact" className="bg-bg-secondary">
       <div className="flex flex-col gap-12">
 
-        {/* ── Header ── */}
         <FadeInView>
           <div className="text-center">
             <SectionTag>Get In Touch</SectionTag>
@@ -211,7 +253,6 @@ function Contact() {
           </div>
         </FadeInView>
 
-        {/* ── Two Column Layout ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
           {/* Left — Contact Info */}
@@ -231,39 +272,37 @@ function Contact() {
                 <ContactItem
                   icon={FiMail}
                   label="Email"
-                  value={SITE_CONFIG.email}
-                  href={`mailto:${SITE_CONFIG.email}`}
+                  value="nellytobiloba@gmail.com"
+                  href="mailto:nellytobiloba@gmail.com"
                 />
                 <ContactItem
                   icon={FiPhone}
                   label="Phone"
-                  value={SITE_CONFIG.phone}
-                  href={`tel:${SITE_CONFIG.phone}`}
+                  value="+2347044788434"
+                  href="tel:+2347044788434"
                 />
                 <ContactItem
                   icon={FiMapPin}
                   label="Location"
-                  value={SITE_CONFIG.location}
+                  value="Lagos State, Nigeria"
                 />
               </div>
 
-              {/* Social Links */}
               <div className="flex flex-col gap-3">
                 <p className="text-text-muted text-xs font-medium uppercase tracking-widest">
                   Find me online
                 </p>
                 <div className="flex gap-3">
                   {[
-                    { icon: FiGithub, href: SOCIAL_LINKS.github, label: 'GitHub' },
-                    { icon: FiLinkedin, href: `https://${SOCIAL_LINKS.linkedin}`, label: 'LinkedIn' },
-                    { icon: FiMail, href: `mailto:${SOCIAL_LINKS.email}`, label: 'Email' },
-                  ].map(({ icon: Icon, href, label }) => (
+                    { icon: FiGithub, href: SOCIAL_LINKS.github },
+                    { icon: FiLinkedin, href: `https://${SOCIAL_LINKS.linkedin}` },
+                    { icon: FiMail, href: `mailto:${SOCIAL_LINKS.email}` },
+                  ].map(({ icon: Icon, href }, i) => (
                     <a
-                      key={label}
+                      key={i}
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={label}
                       className="w-10 h-10 rounded-xl border border-border flex items-center justify-center text-text-secondary hover:text-accent hover:border-accent transition-all duration-200"
                     >
                       <Icon size={16} />
@@ -272,7 +311,6 @@ function Contact() {
                 </div>
               </div>
 
-              {/* Availability Card */}
               <Card className="border-green-500/20 bg-green-500/5">
                 <div className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
@@ -289,7 +327,7 @@ function Contact() {
             </div>
           </FadeInView>
 
-          {/* Right — Contact Form */}
+          {/* Right — Form */}
           <FadeInView direction="right" delay={0.2}>
             <Card className="p-6 sm:p-8">
               <ContactForm />

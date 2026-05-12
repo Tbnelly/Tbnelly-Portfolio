@@ -70,7 +70,7 @@ function About() {
 
               <div className="flex flex-col gap-4 text-text-secondary text-base leading-relaxed">
                 <p>
-                  I'm <span className="text-text-primary font-semibold">Oluwatobiloba Bamidele-Nelly</span> —
+                  I'm <span className="text-text-primary font-semibold">Oluwatobiloba Bamidele-Nelly</span>,
                   a full-stack (frontend-focused) developer based in Lagos, Nigeria.
                   I'm passionate about building digital products that are not just
                   functional but genuinely enjoyable to use.
@@ -81,7 +81,7 @@ function About() {
                   real products used by real users across web and mobile platforms.
                 </p>
                 <p>
-                  My stack spans React, Next.js, Vue.js, Node.js, Laravel, and MySQL —
+                  My stack spans React, Next.js, Vue.js, Node.js, MongoDb, Laravel, and MySQL —
                   and I'm always learning. I believe great software is built at the
                   intersection of clean code and thoughtful design.
                 </p>
