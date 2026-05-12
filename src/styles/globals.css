@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+@theme {
+  /* ===== COLOR PALETTE ===== */
+  --color-bg-primary: #0d0d0d;
+  --color-bg-secondary: #161616;
+  --color-bg-card: #1a1a1a;
+  --color-accent: #c8ff00;
+  --color-accent-hover: #b8ef00;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a0a0a0;
+  --color-text-muted: #666666;
+  --color-border: #2a2a2a;
+
+  /* ===== TYPOGRAPHY ===== */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "Fira Code", monospace;
+
+  /* ===== BORDER RADIUS ===== */
+  --radius-card: 1rem;
+  --radius-btn: 0.5rem;
+
+  /* ===== SPACING (custom) ===== */
+  --spacing-section: 5rem;
+}
+
+/* ===== BASE STYLES ===== */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== CUSTOM SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 3px;
+}
+
+/* ===== SELECTION COLOR ===== */
+::selection {
+  background: var(--color-accent);
+  color: #000000;
+}
+
+
+/* ===== SMOOTH SCROLL BEHAVIOR ===== */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px; /* offset for fixed navbar height */
+}
+
+/* ===== SECTION TRANSITIONS ===== */
+/* Prevents layout shift during animations */
+section {
+  will-change: auto;
+}
+
+/* ===== REDUCED MOTION ACCESSIBILITY ===== */
+/* Respects user's OS-level "reduce motion" preference */
+/* Senior engineers always include this */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== GRADIENT TEXT UTILITY ===== */
+.gradient-text {
+  background: linear-gradient(135deg, #c8ff00, #88ff00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== GLASS CARD EFFECT ===== */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ===== ACCENT GLOW ===== */
+.accent-glow {
+  box-shadow: 0 0 30px rgba(200, 255, 0, 0.15);
+}
+
+/* ===== HIDE SCROLLBAR BUT KEEP SCROLL ===== */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
