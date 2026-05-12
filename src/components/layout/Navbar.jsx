@@ -23,7 +23,16 @@ function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const handleNavClick = () => setIsOpen(false)
+  // FIXED: now accepts href and scrolls smoothly after menu closes
+  const handleNavClick = (e, href) => {
+    e.preventDefault()
+    setIsOpen(false)
+    setTimeout(() => {
+      const id = href.replace('#', '')
+      const el = document.getElementById(id)
+      if (el) el.scrollIntoView({ behavior: 'smooth' })
+    }, 150)
+  }
 
   return (
     <motion.header
@@ -113,7 +122,7 @@ function Navbar() {
                   <motion.a
                     key={link.href}
                     href={link.href}
-                    onClick={handleNavClick}
+                    onClick={(e) => handleNavClick(e, link.href)} // FIXED
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
@@ -132,7 +141,7 @@ function Navbar() {
                 <Button
                   as="a"
                   href="#contact"
-                  onClick={handleNavClick}
+                  onClick={(e) => handleNavClick(e, '#contact')} // FIXED
                   className="w-full justify-center"
                 >
                   Hire Me

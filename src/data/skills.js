@@ -27,7 +27,6 @@ export const skillCategories = [
       { name: 'Node.js', icon: SiNodedotjs, color: '#339933' },
       { name: 'Express.js', icon: SiExpress, color: '#ffffff' },
       { name: 'Laravel', icon: SiLaravel, color: '#FF2D20' },
-      { name: 'MongoDB', icon: SiMongodb, color: '#47A248' },
       { name: 'PHP', icon: SiPhp, color: '#777BB4' },
     ],
   },
