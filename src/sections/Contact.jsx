@@ -13,11 +13,21 @@ import FadeInView from '../components/animations/FadeInView'
 import { SOCIAL_LINKS } from '../constants'
 
 // ─── Environment Variables ────────────────────────────────────────────
-// Vite exposes these via import.meta.env
-// They are injected at BUILD TIME from your .env file
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
 const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+
+// ─── Character Limits ─────────────────────────────────────────────────
+const LIMITS = {
+  name: 60,
+  email: 100,
+  subject: 100,
+  budget: 40,
+  message: 1000,
+}
+
+// ─── Sanitize input: strip HTML/script tags ───────────────────────────
+const sanitize = (value) => value.replace(/<[^>]*>/g, '')
 
 // ─── Contact Info Item ────────────────────────────────────────────────
 function ContactItem({ icon: Icon, label, value, href }) {
@@ -43,11 +53,14 @@ function ContactForm() {
     name: '', email: '', subject: '', budget: '', message: '',
   })
 
-  // Three possible states: idle | loading | success | error
   const [status, setStatus] = useState('idle')
 
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    const limit = LIMITS[name]
+    // Sanitize + enforce character limit
+    const cleaned = sanitize(value).slice(0, limit)
+    setForm((prev) => ({ ...prev, [name]: cleaned }))
   }
 
   const handleSubmit = async (e) => {
@@ -55,18 +68,14 @@ function ContactForm() {
     setStatus('loading')
 
     try {
-      // EmailJS sends the form using your template
-      // It maps form field names to template variables automatically
-      // {{from_name}} in template = input name="name" in form
       await emailjs.sendForm(
         SERVICE_ID,
         TEMPLATE_ID,
-        formRef.current,  // passes the whole form element
+        formRef.current,
         { publicKey: PUBLIC_KEY }
       )
 
       setStatus('success')
-      // Reset form after success
       setForm({ name: '', email: '', subject: '', budget: '', message: '' })
 
     } catch (error) {
@@ -142,6 +151,7 @@ function ContactForm() {
             onChange={handleChange}
             placeholder="John Doe"
             required
+            maxLength={LIMITS.name}
             className={inputClass}
           />
         </div>
@@ -156,6 +166,7 @@ function ContactForm() {
             onChange={handleChange}
             placeholder="you@email.com"
             required
+            maxLength={LIMITS.email}
             className={inputClass}
           />
         </div>
@@ -173,6 +184,7 @@ function ContactForm() {
             onChange={handleChange}
             placeholder="Project Inquiry"
             required
+            maxLength={LIMITS.subject}
             className={inputClass}
           />
         </div>
@@ -185,6 +197,7 @@ function ContactForm() {
             value={form.budget}
             onChange={handleChange}
             placeholder="e.g. $500 – $1000"
+            maxLength={LIMITS.budget}
             className={inputClass}
           />
         </div>
@@ -202,8 +215,13 @@ function ContactForm() {
           placeholder="Tell me about your project..."
           required
           rows={5}
+          maxLength={LIMITS.message}
           className={`${inputClass} resize-none`}
         />
+        {/* Character counter for message only */}
+        <p className="text-text-muted text-xs text-right">
+          {form.message.length} / {LIMITS.message}
+        </p>
       </div>
 
       {/* Submit Button */}
@@ -318,7 +336,7 @@ function Contact() {
                     <p className="text-text-primary text-sm font-semibold">
                       Available for work
                     </p>
-                    <p className="text-text-muted text-xs">
+                    <p className="text-text-muted text-xs">a
                       Response time: within 24 hours
                     </p>
                   </div>
